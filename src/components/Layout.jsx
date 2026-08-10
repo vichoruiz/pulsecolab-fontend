@@ -1,72 +1,96 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Building2, Users, MessageCircle, LogOut } from 'lucide-react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import {
+  LayoutDashboard,
+  Building2,
+  Users,
+  MessageCircle,
+  ClipboardCheck,
+  ListChecks,
+  LogOut,
+} from 'lucide-react'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar'
+import { getUserRole } from '@/lib/api'
 
-const items = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/equipos', label: 'Equipos', icon: Building2 },
-  { to: '/usuarios', label: 'Usuarios', icon: Users },
-  { to: '/chats', label: 'Chats', icon: MessageCircle },
+const ITEMS = [
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'HRBP', 'LIDER'] },
+  { to: '/equipos', label: 'Equipos', icon: Building2, roles: ['ADMIN', 'HRBP'] },
+  { to: '/usuarios', label: 'Usuarios', icon: Users, roles: ['ADMIN'] },
+  { to: '/mediciones', label: 'Mediciones', icon: ClipboardCheck, roles: ['ADMIN', 'HRBP', 'LIDER'] },
+  { to: '/acciones', label: 'Acciones', icon: ListChecks, roles: ['ADMIN', 'HRBP', 'LIDER', 'COLABORADOR'] },
+  { to: '/conversaciones', label: 'Conversaciones', icon: MessageCircle, roles: ['ADMIN', 'HRBP'] },
 ]
 
 export default function Layout() {
+  const navigate = useNavigate()
+  const rol = getUserRole()
+  const items = ITEMS.filter((item) => item.roles.includes(rol))
+
   function logout() {
     localStorage.removeItem('pulsecolab_token')
     localStorage.removeItem('pulsecolab_empresa_id')
-    window.location.href = '/login'
+    navigate('/login')
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="flex min-h-screen">
-        <aside className="hidden w-64 flex-col border-r border-slate-200 bg-white lg:flex">
-          <div className="border-b border-slate-200 px-6 py-5">
-            <div className="text-lg font-semibold">PulseColab AI</div>
-            <div className="text-sm text-slate-500">People Intelligence</div>
-          </div>
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <span className="px-2 text-sm font-semibold text-slate-900">PulseColab</span>
+          {rol && <span className="px-2 text-xs text-slate-500">Rol: {rol}</span>}
+        </SidebarHeader>
 
-          <nav className="flex-1 space-y-1 p-4">
-            {items.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
-                    isActive
-                      ? 'bg-slate-900 text-white'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                  }`
-                }
-              >
-                <Icon size={18} />
-                <span>{label}</span>
-              </NavLink>
-            ))}
-          </nav>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {items.map(({ to, label, icon: Icon }) => (
+                  <SidebarMenuItem key={to}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={to}
+                        className={({ isActive }) =>
+                          isActive ? 'flex items-center gap-2 font-medium text-slate-900' : 'flex items-center gap-2 text-slate-600'
+                        }
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{label}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
 
-          <div className="border-t border-slate-200 p-4">
-            <button
-              onClick={logout}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-            >
-              <LogOut size={18} />
-              Cerrar sesión
-            </button>
-          </div>
-        </aside>
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={logout}>
+                <LogOut className="h-4 w-4" />
+                <span>Cerrar sesión</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      </Sidebar>
 
-        <div className="flex min-h-screen flex-1 flex-col">
-          <header className="border-b border-slate-200 bg-white px-4 py-4 lg:px-8">
-            <h1 className="text-xl font-semibold text-slate-900">Panel interno</h1>
-            <p className="text-sm text-slate-500">
-              Administración de empresas, equipos, usuarios y análisis
-            </p>
-          </header>
-
-          <main className="flex-1 p-4 lg:p-8">
-            <Outlet />
-          </main>
-        </div>
-      </div>
-    </div>
+      <main className="flex-1 p-6">
+        <SidebarTrigger className="mb-4 md:hidden" />
+        <Outlet />
+      </main>
+    </SidebarProvider>
   )
 }

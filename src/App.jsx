@@ -4,11 +4,26 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Equipos from './pages/Equipos'
 import Usuarios from './pages/Usuarios'
-import Chats from './pages/Chats'
+import Mediciones from './pages/Mediciones'
+import Acciones from './pages/Acciones'
+import Conversaciones from './pages/Conversaciones'
+import { getUserRole } from './lib/api'
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('pulsecolab_token')
   return token ? children : <Navigate to="/login" replace />
+}
+
+function RoleRoute({ roles, children }) {
+  const rol = getUserRole()
+  if (!rol) return <Navigate to="/login" replace />
+  if (!roles.includes(rol)) return <Navigate to="/acciones" replace />
+  return children
+}
+
+function IndexRedirect() {
+  const rol = getUserRole()
+  return <Navigate to={rol === 'COLABORADOR' ? '/acciones' : '/dashboard'} replace />
 }
 
 export default function App() {
@@ -25,12 +40,32 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="equipos" element={<Equipos />} />
-          <Route path="usuarios" element={<Usuarios />} />
-          <Route path="chats" element={<Chats />} />
+          <Route index element={<IndexRedirect />} />
+
+          <Route
+            path="dashboard"
+            element={<RoleRoute roles={['ADMIN', 'HRBP', 'LIDER']}><Dashboard /></RoleRoute>}
+          />
+          <Route
+            path="equipos"
+            element={<RoleRoute roles={['ADMIN', 'HRBP']}><Equipos /></RoleRoute>}
+          />
+          <Route
+            path="usuarios"
+            element={<RoleRoute roles={['ADMIN']}><Usuarios /></RoleRoute>}
+          />
+          <Route
+            path="mediciones"
+            element={<RoleRoute roles={['ADMIN', 'HRBP', 'LIDER']}><Mediciones /></RoleRoute>}
+          />
+          <Route path="acciones" element={<Acciones />} />
+          <Route
+            path="conversaciones"
+            element={<RoleRoute roles={['ADMIN', 'HRBP']}><Conversaciones /></RoleRoute>}
+          />
         </Route>
+
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   )

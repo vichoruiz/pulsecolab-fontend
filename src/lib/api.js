@@ -32,9 +32,53 @@ async function apiFetch(path, options = {}) {
   return response.json()
 }
 
+export function decodeToken() {
+  const token = getToken()
+  if (!token) return null
+  try {
+    return JSON.parse(atob(token.split('.')[1]))
+  } catch {
+    return null
+  }
+}
+
+export function getUserRole() {
+  return decodeToken()?.rol || null
+}
+
 export const api = {
   get: (path) => apiFetch(path),
   post: (path, body) => apiFetch(path, { method: 'POST', body: JSON.stringify(body) }),
   patch: (path, body) => apiFetch(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: (path) => apiFetch(path, { method: 'DELETE' }),
+}
+
+export const preguntasApi = {
+  listar: (empresaId) => api.get(`/empresas/${empresaId}/preguntas-checkin`),
+  crear: (empresaId, data) => api.post(`/empresas/${empresaId}/preguntas-checkin`, data),
+}
+
+export const medicionesApi = {
+  listar: (empresaId) => api.get(`/empresas/${empresaId}/mediciones`),
+  crear: (empresaId, equipoId, origen) =>
+    api.post(`/empresas/${empresaId}/equipos/${equipoId}/mediciones`, { origen }),
+  analisis: (empresaId, medicionId) =>
+    api.get(`/empresas/${empresaId}/mediciones/${medicionId}/analisis`),
+}
+
+export const accionesApi = {
+  listar: (empresaId) => api.get(`/empresas/${empresaId}/acciones`),
+  crear: (empresaId, data) => api.post(`/empresas/${empresaId}/acciones`, data),
+  actualizar: (empresaId, accionId, data) => api.patch(`/empresas/${empresaId}/acciones/${accionId}`, data),
+}
+
+export const conversacionesApi = {
+  listar: (empresaId) => api.get(`/empresas/${empresaId}/conversaciones`),
+  detalle: (empresaId, conversacionId) => api.get(`/empresas/${empresaId}/conversaciones/${conversacionId}`),
+}
+
+export const aprobacionesApi = {
+  listar: (empresaId) => api.get(`/empresas/${empresaId}/aprobaciones`),
+  resolver: (empresaId, aprobacionId, decision) =>
+    api.patch(`/empresas/${empresaId}/aprobaciones/${aprobacionId}`, { decision }),
 }
